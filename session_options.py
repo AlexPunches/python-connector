@@ -4,13 +4,15 @@ from dotenv import load_dotenv
 
 from rest_modules.users import Users
 from utils import get_master_key, get_request_headers
-
+import utils.http_client as http_client
 
 load_dotenv()
 
 
 class SessionOptions:
-    def __init__(self, no_env_options: dict):
+    def __init__(self, no_env_options: dict | None = None):
+        if no_env_options is None:
+            no_env_options = dict()
         self.user = Users(self)
         self.host = no_env_options.get("host", os.getenv("HOST"))
         self.api_key = no_env_options.get("api_key", os.getenv("API_KEY"))
@@ -22,6 +24,9 @@ class SessionOptions:
         self.master_key = None
         self.request_headers = None
         self.user_info = None
+        self.http_session: http_client.HttpClientProtocol = http_client.HttpClient(
+            verify=os.getenv("SSL_VERIFY", "True") == "True"
+        )
 
     def login(self):
         self.token, self.refresh_token = self.user.login()
