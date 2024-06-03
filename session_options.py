@@ -25,7 +25,7 @@ class SessionOptions:
         self.request_headers = None
         self.user_info = None
         self.http_session: http_client.HttpClientProtocol = http_client.HttpClient(
-            verify=os.getenv("SSL_VERIFY", "True") == "True"
+            verify=not os.getenv("SSL_VERIFY") == "False"
         )
 
     def login(self):
