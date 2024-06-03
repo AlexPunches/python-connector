@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "python-connector"
+version = "0.1.0"
+description = ""
+authors = ["Korostylev Alexandr <korostylev-aa@rr.paymgate.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+cryptography = "42.0.5"
+requests = "2.31.0"
+python-dotenv = "1.0.1"
+loguru = "0.7.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
