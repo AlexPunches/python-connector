@@ -1,7 +1,7 @@
-import requests
 from loguru import logger
 
 from rest_modules import is_failed_status_code
+from session_options import SessionOptions
 from utils import (
     generate_password,
     encrypt_string,
@@ -10,9 +10,11 @@ from utils import (
     encrypt_customs,
     format_attachments,
 )
+import utils.http_client as http_client
 
 
-def get_password(options, password_id):
+def get_password(options: SessionOptions, password_id):
+    requests: http_client.HttpClientProtocol = options.http_session
     # receive password item
     response = requests.get(
         url=f"{options.host}/passwords/{password_id}",
@@ -41,6 +43,7 @@ def get_attachments(password_item: dict, options):
 
 
 def get_attachment(password_id: str, attachment_id: str, options):
+    requests: http_client.HttpClientProtocol = options.http_session
     response = requests.get(
         url=f"{options.host}/passwords/{password_id}/attachment/{attachment_id}",
         headers=options.request_headers,
@@ -66,6 +69,7 @@ def search_passwords(options, search_params: dict):
         "includeShortcuts": False,
     }
     """
+    requests: http_client.HttpClientProtocol = options.http_session
 
     response = requests.post(
         url=f"{options.host}/passwords/search",
@@ -83,6 +87,7 @@ def search_passwords(options, search_params: dict):
 
 
 def add_password(fields: dict, vault: dict, vault_password: str, options):
+    requests: http_client.HttpClientProtocol = options.http_session
     if not fields:
         fields = {}
 
@@ -117,6 +122,7 @@ def add_password(fields: dict, vault: dict, vault_password: str, options):
 
 
 def delete_password(password_id: str, options):
+    requests: http_client.HttpClientProtocol = options.http_session
     response = requests.delete(
         url=f"{options.host}/passwords/{password_id}", headers=options.request_headers
     )
@@ -131,6 +137,7 @@ def delete_password(password_id: str, options):
 
 
 def get_inbox_passwords(options):
+    requests: http_client.HttpClientProtocol = options.http_session
     response = requests.get(
         url=f"{options.host}/sharing/inbox/list", headers=options.request_headers
     )
@@ -145,6 +152,7 @@ def get_inbox_passwords(options):
 
 
 def get_inbox_password(inbox_password_id, options):
+    requests: http_client.HttpClientProtocol = options.http_session
     response = requests.post(
         url=f"{options.host}/sharing/inbox/{inbox_password_id}", headers=options.request_headers
     )

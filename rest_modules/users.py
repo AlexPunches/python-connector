@@ -1,6 +1,5 @@
-import requests
-
 from rest_modules import is_failed_status_code, is_failed_log_in_status_code
+import utils.http_client as http_client
 
 
 class Users:
@@ -8,6 +7,7 @@ class Users:
         self.options = options
 
     def login(self):
+        requests: http_client.HttpClientProtocol = self.options.http_session
         url = f"{self.options.host}/auth/login/{self.options.api_key}"
         response = requests.post(
             url=url,
@@ -21,6 +21,7 @@ class Users:
         return token, refresh_token
 
     def get_mk_options(self):
+        requests: http_client.HttpClientProtocol = self.options.http_session
         # PBKDF option
         response = requests.get(
             url=f"{self.options.host}/user/get-master-key-options",
@@ -34,6 +35,7 @@ class Users:
         return response.json().get("data")
 
     def logout(self):
+        requests: http_client.HttpClientProtocol = self.options.http_session
         response = requests.post(
             url=f"{self.options.host}/auth/logout",
             headers={"Passwork-Auth": self.options.token},
@@ -43,6 +45,7 @@ class Users:
         return response.json().get("data")
 
     def get_user_info(self):
+        requests: http_client.HttpClientProtocol = self.options.http_session
         response = requests.get(
             url=f"{self.options.host}/user/info",
             headers=self.options.request_headers,
