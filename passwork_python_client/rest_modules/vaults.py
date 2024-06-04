@@ -1,14 +1,17 @@
-from rest_modules import is_failed_status_code
+from loguru import logger
+
 import utils.http_client as http_client
+import utils.messages as msg
 
 
 def get_vault(vault_id: str, options):
-    requests: http_client.HttpClientProtocol = options.http_session
     # receive vault item
-    response = requests.get(
-        url=f"{options.host}/vaults/{vault_id}",
-        headers=options.request_headers,
-    )
-    if is_failed_status_code(prefix=f"Vault with ID {vault_id} not found", status_code=response.status_code):
-        raise Exception
-    return response.json().get("data")
+    try:
+        return options.http_session.get(
+            url=f"{options.host}/vaults/{vault_id}",
+            headers=options.request_headers,
+        )
+    except http_client.HttpClientError as ex:
+        message = f"Vault with ID {vault_id} not found"
+        logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
+        raise ex
