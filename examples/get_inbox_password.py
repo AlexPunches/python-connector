@@ -1,7 +1,7 @@
 import os
 import json
 from loguru import logger
-from passwork_api import PassworkAPI
+from passwork_python_client import PassworkAPI
 
 
 # A way to overwrite the specified data in environment variables or not use environment variables at all
