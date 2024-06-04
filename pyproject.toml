@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "python-connector"
-version = "0.1.0"
+name = "passwork-python-client"
+version = "0.2.0"
 description = ""
-authors = ["Korostylev Alexandr <korostylev-aa@rr.paymgate.ru>"]
+authors = [""]
 readme = "README.md"
 
 [tool.poetry.dependencies]
