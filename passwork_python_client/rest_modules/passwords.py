@@ -1,6 +1,5 @@
 from loguru import logger
 
-from rest_modules import is_failed_status_code
 from session_options import SessionOptions
 from utils import (
     generate_password,
@@ -10,55 +9,35 @@ from utils import (
     encrypt_customs,
     format_attachments,
 )
-import utils.http_client as http_client
+import utils.messages as msg
 
 
-def get_password(options: SessionOptions, password_id):
-    requests: http_client.HttpClientProtocol = options.http_session
-    # receive password item
-    response = requests.get(
+def get_password(options: SessionOptions, password_id: str) -> dict:
+    return options.http_session.get(
         url=f"{options.host}/passwords/{password_id}",
         headers=options.request_headers,
     )
-    if is_failed_status_code(
-        status_code=response.status_code,
-        prefix=f"Password with ID {password_id} not found",
-    ):
-        raise Exception
-
-    return response.json().get("data")
 
 
-def get_attachments(password_item: dict, options):
+def get_attachments(password_item: dict, options: SessionOptions) -> list | None:
     attachments = password_item.get("attachments")
-    # receive attachments
     if not attachments:
         logger.warning(f"Password with ID {password_item.get('id')} has no attachments")
         return None
-
     return [
         get_attachment(password_item.get("id"), attachment["id"], options)
         for attachment in attachments
     ]
 
 
-def get_attachment(password_id: str, attachment_id: str, options):
-    requests: http_client.HttpClientProtocol = options.http_session
-    response = requests.get(
+def get_attachment(password_id: str, attachment_id: str, options: SessionOptions) -> dict:
+    return options.http_session.get(
         url=f"{options.host}/passwords/{password_id}/attachment/{attachment_id}",
         headers=options.request_headers,
     )
 
-    if is_failed_status_code(
-        status_code=response.status_code,
-        prefix=f"Failed to get attachments for password ID {password_id}",
-    ):
-        raise Exception
 
-    return response.json().get("data")
-
-
-def search_passwords(options, search_params: dict):
+def search_passwords(options: SessionOptions, search_params: dict) -> dict:
     """
     search_params = {
         "query": "",
@@ -69,25 +48,21 @@ def search_passwords(options, search_params: dict):
         "includeShortcuts": False,
     }
     """
-    requests: http_client.HttpClientProtocol = options.http_session
-
-    response = requests.post(
+    search_result = options.http_session.post(
         url=f"{options.host}/passwords/search",
         json=search_params,
         headers=options.request_headers,
     )
 
-    search_result = response.json().get("data")
     if not search_result:
-        logger.warning("Passwords with the specified search parameters were not found")
+        logger.warning(msg.PASSWORDS_NOT_FOUND)
     if isinstance(search_result, dict) and "errorMessage" in search_result:
         logger.error(search_result["errorMessage"])
         raise Exception
     return search_result
 
 
-def add_password(fields: dict, vault: dict, vault_password: str, options):
-    requests: http_client.HttpClientProtocol = options.http_session
+def add_password(fields: dict, vault: dict, vault_password: str, options: SessionOptions) -> dict:
     if not fields:
         fields = {}
 
@@ -109,59 +84,30 @@ def add_password(fields: dict, vault: dict, vault_password: str, options):
 
     fields.setdefault("name", "")
 
-    response = requests.post(
-        url=f"{options.host}/passwords", json=fields, headers=options.request_headers
+    return options.http_session.post(
+        url=f"{options.host}/passwords",
+        json=fields,
+        headers=options.request_headers,
     )
 
-    if is_failed_status_code(
-        status_code=response.status_code, prefix="Error when adding a new password"
-    ):
-        raise Exception
 
-    return response.json().get("data")
-
-
-def delete_password(password_id: str, options):
-    requests: http_client.HttpClientProtocol = options.http_session
-    response = requests.delete(
-        url=f"{options.host}/passwords/{password_id}", headers=options.request_headers
+def delete_password(password_id: str, options: SessionOptions) -> None:
+    options.http_session.delete(
+        url=f"{options.host}/passwords/{password_id}",
+        headers=options.request_headers,
     )
-
-    if is_failed_status_code(
-        status_code=response.status_code,
-        prefix=f"Error when deleting password with id {password_id}",
-    ):
-        raise Exception
-
     logger.success(f"Deletion of password with id {password_id} completed successfully")
 
 
-def get_inbox_passwords(options):
-    requests: http_client.HttpClientProtocol = options.http_session
-    response = requests.get(
-        url=f"{options.host}/sharing/inbox/list", headers=options.request_headers
+def get_inbox_passwords(options: SessionOptions) -> dict:
+    return options.http_session.get(
+        url=f"{options.host}/sharing/inbox/list",
+        headers=options.request_headers,
     )
 
-    if is_failed_status_code(
-        status_code=response.status_code,
-        prefix=f"Error when getting list of inbox passwords",
-    ):
-        raise Exception
 
-    return response.json().get("data")
-
-
-def get_inbox_password(inbox_password_id, options):
-    requests: http_client.HttpClientProtocol = options.http_session
-    response = requests.post(
-        url=f"{options.host}/sharing/inbox/{inbox_password_id}", headers=options.request_headers
+def get_inbox_password(inbox_password_id: str, options: SessionOptions) -> dict:
+    return options.http_session.post(
+        url=f"{options.host}/sharing/inbox/{inbox_password_id}",
+        headers=options.request_headers,
     )
-
-    if is_failed_status_code(
-        status_code=response.status_code,
-        prefix=f"Error when getting inbox password id: {inbox_password_id}",
-    ):
-        raise Exception
-
-    inbox_password = response.json().get("data")
-    return inbox_password

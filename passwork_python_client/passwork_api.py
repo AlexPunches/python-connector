@@ -1,5 +1,8 @@
 import pathlib
 import sys
+
+from loguru import logger
+
 sys.path.append(str(pathlib.Path(__file__).resolve().parent))
 
 from session_options import SessionOptions
@@ -21,6 +24,8 @@ from utils import (
     decrypt_string,
     get_inbox_encryption_key,
 )
+import utils.http_client as http_client
+import utils.messages as msg
 
 
 class PassworkAPI:
@@ -55,7 +60,12 @@ class PassworkAPI:
         Returns:
             The retrieved password object dict
         """
-        return get_password(self.session_options, password_id)
+        try:
+            return get_password(self.session_options, password_id)
+        except http_client.HttpClientError as ex:
+            message = f"Password with ID {password_id} not found"
+            logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
+            raise ex
 
     def get_vault(self, vault_id: str) -> dict:
         """Retrieves a vault by its identifier.
@@ -66,7 +76,13 @@ class PassworkAPI:
         Returns:
             The retrieved vault object dict
         """
-        return get_vault(vault_id=vault_id, options=self.session_options)
+        # receive vault item
+        try:
+            return get_vault(vault_id=vault_id, options=self.session_options)
+        except http_client.HttpClientError as ex:
+            message = f"Vault with ID {vault_id} not found"
+            logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
+            raise ex
 
     def get_vault_password(self, vault_item: dict) -> str:
         """Retrieves the password for a given vault item.
@@ -128,11 +144,17 @@ class PassworkAPI:
             download_path: Path for downloading attachments
         """
 
-        attachments = get_attachments(password_item=password_item, options=self.session_options)
-        if not attachments:
-            return None
-        [decrypt_and_save_password_attachment(attachment, password_encryption_key, download_path)
-         for attachment in attachments]
+        try:
+            attachments = get_attachments(password_item=password_item, options=self.session_options)
+        except http_client.HttpClientError as ex:
+            message = f"Failed to get attachments for password ID {password_item}"
+            logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
+            raise ex
+        else:
+            if not attachments:
+                return None
+            [decrypt_and_save_password_attachment(attachment, password_encryption_key, download_path)
+             for attachment in attachments]
 
     def delete_password(self, password_id: str):
         """Deletes a password by its identifier.
@@ -140,7 +162,12 @@ class PassworkAPI:
         Args:
             password_id: The identifier of the password to be deleted
         """
-        delete_password(password_id, self.session_options)
+        try:
+            delete_password(password_id, self.session_options)
+        except http_client.HttpClientError as ex:
+            message = f"Error when deleting password with id {password_id}"
+            logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
+            raise ex
 
     def search_password(self, **kwargs) -> list:
         """Searches for passwords matching given criteria.
@@ -203,13 +230,17 @@ class PassworkAPI:
         Returns:
             Dict with added password data
         """
-
-        return add_password(
-            password_adding_fields,
-            vault_item,
-            vault_password,
-            options=self.session_options,
-        )
+        try:
+            return add_password(
+                password_adding_fields,
+                vault_item,
+                vault_password,
+                options=self.session_options,
+            )
+        except http_client.HttpClientError as ex:
+            message = "Error when adding a new password"
+            logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
+            raise ex
 
     def get_inbox_passwords(self) -> list[dict]:
         """Retrieves a list of all inbox passwords from the configured source.
@@ -219,8 +250,12 @@ class PassworkAPI:
         Returns:
         list[dict]: A list of dictionaries, where each dictionary represents an inbox password.
         """
-
-        return get_inbox_passwords(self.session_options)
+        try:
+            return get_inbox_passwords(self.session_options)
+        except http_client.HttpClientError as ex:
+            message = "Error when getting list of inbox passwords"
+            logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
+            raise ex
 
     def get_inbox_password(self, inbox_password_id: str) -> dict:
         """Retrieves a specific inbox password based on its ID.
@@ -233,8 +268,12 @@ class PassworkAPI:
         Returns:
             dict: A dictionary containing the details of the requested inbox password.
         """
-
-        return get_inbox_password(inbox_password_id, self.session_options)
+        try:
+            return get_inbox_password(inbox_password_id, self.session_options)
+        except http_client.HttpClientError as ex:
+            message = f"Error when getting inbox password id: {inbox_password_id}"
+            logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
+            raise ex
 
     def get_inbox_encryption_key(self, inbox_password) -> str:
         """Decrypts the encryption key for a password item.
