@@ -1,3 +1,4 @@
+from loguru import logger
 import pathlib
 import sys
 sys.path.append(str(pathlib.Path(__file__).resolve().parent))
@@ -21,6 +22,8 @@ from utils import (
     decrypt_string,
     get_inbox_encryption_key,
 )
+import utils.http_client as http_client
+import utils.messages as msg
 
 
 class PassworkAPI:
@@ -66,7 +69,13 @@ class PassworkAPI:
         Returns:
             The retrieved vault object dict
         """
-        return get_vault(vault_id=vault_id, options=self.session_options)
+        # receive vault item
+        try:
+            return get_vault(vault_id=vault_id, options=self.session_options)
+        except http_client.HttpClientError as ex:
+            message = f"Vault with ID {vault_id} not found"
+            logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
+            raise ex
 
     def get_vault_password(self, vault_item: dict) -> str:
         """Retrieves the password for a given vault item.
