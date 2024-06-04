@@ -8,7 +8,7 @@ class Users:
     def __init__(self, options):
         self.options = options
 
-    def login(self):
+    def login(self) -> tuple:
         url = f"{self.options.host}/auth/login/{self.options.api_key}"
         try:
             tokens = self.options.http_session.post(
@@ -37,7 +37,7 @@ class Users:
             token, refresh_token = tokens.get("token"), tokens.get("refreshToken")
             return token, refresh_token
 
-    def get_mk_options(self):
+    def get_mk_options(self) -> dict:
         # PBKDF option
         try:
             return self.options.http_session.get(
@@ -49,7 +49,7 @@ class Users:
             logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
             raise ex
 
-    def logout(self):
+    def logout(self) -> dict:
         try:
             return self.options.http_session.post(
                 url=f"{self.options.host}/auth/logout",
@@ -60,7 +60,7 @@ class Users:
             logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
             raise ex
 
-    def get_user_info(self):
+    def get_user_info(self) -> dict:
         try:
             return self.options.http_session.get(
                 url=f"{self.options.host}/user/info",

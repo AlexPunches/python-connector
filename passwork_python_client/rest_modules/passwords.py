@@ -9,49 +9,35 @@ from utils import (
     encrypt_customs,
     format_attachments,
 )
-import utils.http_client as http_client
 import utils.messages as msg
 
 
 def get_password(options: SessionOptions, password_id: str) -> dict:
-    # receive password item
-    try:
-        return options.http_session.get(
-            url=f"{options.host}/passwords/{password_id}",
-            headers=options.request_headers,
-        )
-    except http_client.HttpClientError as ex:
-        message = f"Password with ID {password_id} not found"
-        logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
-        raise ex
+    return options.http_session.get(
+        url=f"{options.host}/passwords/{password_id}",
+        headers=options.request_headers,
+    )
 
 
-def get_attachments(password_item: dict, options):
+def get_attachments(password_item: dict, options: SessionOptions) -> list | None:
     attachments = password_item.get("attachments")
-    # receive attachments
     if not attachments:
         logger.warning(f"Password with ID {password_item.get('id')} has no attachments")
         return None
-
     return [
         get_attachment(password_item.get("id"), attachment["id"], options)
         for attachment in attachments
     ]
 
 
-def get_attachment(password_id: str, attachment_id: str, options):
-    try:
-        return options.http_session.get(
-            url=f"{options.host}/passwords/{password_id}/attachment/{attachment_id}",
-            headers=options.request_headers,
-        )
-    except http_client.HttpClientError as ex:
-        message = f"Failed to get attachments for password ID {password_id}"
-        logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
-        raise ex
+def get_attachment(password_id: str, attachment_id: str, options: SessionOptions) -> dict:
+    return options.http_session.get(
+        url=f"{options.host}/passwords/{password_id}/attachment/{attachment_id}",
+        headers=options.request_headers,
+    )
 
 
-def search_passwords(options, search_params: dict):
+def search_passwords(options: SessionOptions, search_params: dict) -> dict:
     """
     search_params = {
         "query": "",
@@ -76,7 +62,7 @@ def search_passwords(options, search_params: dict):
     return search_result
 
 
-def add_password(fields: dict, vault: dict, vault_password: str, options):
+def add_password(fields: dict, vault: dict, vault_password: str, options: SessionOptions) -> dict:
     if not fields:
         fields = {}
 
@@ -98,46 +84,30 @@ def add_password(fields: dict, vault: dict, vault_password: str, options):
 
     fields.setdefault("name", "")
 
-    try:
-        return options.http_session.post(
-            url=f"{options.host}/passwords", json=fields, headers=options.request_headers
-        )
-    except http_client.HttpClientError as ex:
-        message = "Error when adding a new password"
-        logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
-        raise ex
+    return options.http_session.post(
+        url=f"{options.host}/passwords",
+        json=fields,
+        headers=options.request_headers,
+    )
 
 
-def delete_password(password_id: str, options):
-    try:
-        options.http_session.delete(
-            url=f"{options.host}/passwords/{password_id}", headers=options.request_headers
-        )
-    except http_client.HttpClientError as ex:
-        message = f"Error when deleting password with id {password_id}"
-        logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
-        raise ex
-    else:
-        logger.success(f"Deletion of password with id {password_id} completed successfully")
+def delete_password(password_id: str, options: SessionOptions) -> None:
+    options.http_session.delete(
+        url=f"{options.host}/passwords/{password_id}",
+        headers=options.request_headers,
+    )
+    logger.success(f"Deletion of password with id {password_id} completed successfully")
 
 
-def get_inbox_passwords(options):
-    try:
-        return options.http_session.get(
-            url=f"{options.host}/sharing/inbox/list", headers=options.request_headers
-        )
-    except http_client.HttpClientError as ex:
-        message = "Error when getting list of inbox passwords"
-        logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
-        raise ex
+def get_inbox_passwords(options: SessionOptions) -> dict:
+    return options.http_session.get(
+        url=f"{options.host}/sharing/inbox/list",
+        headers=options.request_headers,
+    )
 
 
-def get_inbox_password(inbox_password_id, options):
-    try:
-        return options.http_session.post(
-            url=f"{options.host}/sharing/inbox/{inbox_password_id}", headers=options.request_headers
-        )
-    except http_client.HttpClientError as ex:
-        message = f"Error when getting inbox password id: {inbox_password_id}"
-        logger.error(msg.STATUS_CODE_ERROR, message, ex.code)
-        raise ex
+def get_inbox_password(inbox_password_id: str, options: SessionOptions) -> dict:
+    return options.http_session.post(
+        url=f"{options.host}/sharing/inbox/{inbox_password_id}",
+        headers=options.request_headers,
+    )

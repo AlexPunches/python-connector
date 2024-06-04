@@ -33,22 +33,22 @@ class HttpClient:
 
     def get(self, *args, **kwargs) -> dict:
         response = self.session.get(*args, **kwargs)
-        if self._is_failed_status_code(status_code=response.status_code):
+        if self._is_ok_status_code(status_code=response.status_code):
             return response.json().get("data")
         raise HttpClientError(code=response.status_code)
 
     def post(self, *args, **kwargs) -> dict:
         response = self.session.post(*args, **kwargs)
-        if self._is_failed_status_code(status_code=response.status_code):
+        if self._is_ok_status_code(status_code=response.status_code):
             return response.json().get("data")
         raise HttpClientError(code=response.status_code)
 
     def delete(self, *args, **kwargs) -> dict:
         response = self.session.delete(*args, **kwargs)
-        if self._is_failed_status_code(status_code=response.status_code):
+        if self._is_ok_status_code(status_code=response.status_code):
             return response.json().get("data")
         raise HttpClientError(code=response.status_code)
 
     @staticmethod
-    def _is_failed_status_code(status_code: int) -> bool:
+    def _is_ok_status_code(status_code: int) -> bool:
         return status_code in (http.HTTPStatus.OK,)
